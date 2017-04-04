@@ -104,6 +104,9 @@ public class AppCompatActivity extends FragmentActivity implements AppCompatCall
      * <p>Retrieve a reference to this activity's ActionBar.
      *
      * @return The Activity's ActionBar, or null if it does not have one.
+	 * //---------------------------------------------------------------------
+	 * 返回本Activity的ActionBar
+	 *
      */
     @Nullable
     public ActionBar getSupportActionBar() {
