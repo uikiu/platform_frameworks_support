@@ -76,6 +76,31 @@ import android.view.View;
  *         app:menu="@menu/my_navigation_items" /&gt;
  * &lt;/android.support.v4.widget.DrawerLayout&gt;
  * </pre>
+ * //--------------------------------------------------------------------------------------------------------
+ * NavigationView是应用程序的标准的导航菜单。菜单的内容可以通过资源文件填充。
+ * NavigationView需要与{@link android.support.v4.widget.DrawerLayout}配合，放在其中。
+ * &lt;是转义字符，其代表的符号是："<"
+ * &gt;也是转义字符，其代表的符号是：">"
+ * 下面是使用NavigationView的示例：
+ 
+ <android.support.v4.widget.DrawerLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/drawer_layout"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:fitsSystemWindows="true">
+
+     <!-- Your contents -->
+
+<android.support.design.widget.NavigationView
+    android:id="@+id/navigation"
+    android:layout_width="wrap_content"
+    android:layout_height="match_parent"
+    android:layout_gravity="start"
+    app:menu="@menu/my_navigation_items" />
+</android.support.v4.widget.DrawerLayout>
+
+ 
  */
 public class NavigationView extends ScrimInsetsFrameLayout {
 
@@ -84,13 +109,13 @@ public class NavigationView extends ScrimInsetsFrameLayout {
 
     private static final int PRESENTER_NAVIGATION_VIEW_ID = 1;
 
-    private final NavigationMenu mMenu;
+    private final NavigationMenu mMenu;//导航菜单
     private final NavigationMenuPresenter mPresenter = new NavigationMenuPresenter();
 
-    OnNavigationItemSelectedListener mListener;
+    OnNavigationItemSelectedListener mListener;//导航菜单监听器
     private int mMaxWidth;
 
-    private MenuInflater mMenuInflater;
+    private MenuInflater mMenuInflater;//菜单inflater
 
     public NavigationView(Context context) {
         this(context, null);
@@ -440,6 +465,7 @@ public class NavigationView extends ScrimInsetsFrameLayout {
 
     /**
      * Listener for handling events on navigation items.
+	 * NavigationView的item事件处理监听器
      */
     public interface OnNavigationItemSelectedListener {
 
@@ -449,6 +475,25 @@ public class NavigationView extends ScrimInsetsFrameLayout {
          * @param item The selected item
          *
          * @return true to display the item as the selected item
+		 * //----------------------------------------------------
+		 * 当导航菜单中的项被选中时调用
+		 * @param item 被选中的item
+		 * 如果已经显示为所选item的内容则返回true（开发者决定）
+		 * 通过MenuItem的id来判断具体点击的是那个item。下面是示例代码：
+		 *
+		   @Ovveride
+		   public boolean onNavigationItemSelected(MenuItem menuItem){
+				switch(menuItem.getItemId()){
+					case R.id.list_navigation_menu_item:
+					break;
+					case R.id.statistics_navigation_menu_item:
+					break;
+					default:
+					break;
+				}
+				return true;//此返回值由开发者决定
+		   }
+		 *
          */
         public boolean onNavigationItemSelected(@NonNull MenuItem item);
     }
