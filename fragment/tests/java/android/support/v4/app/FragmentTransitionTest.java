@@ -37,6 +37,7 @@ import android.support.v4.app.test.FragmentTestActivity;
 import android.transition.TransitionSet;
 import android.view.View;
 
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -52,7 +53,7 @@ import java.util.Map;
 @RunWith(Parameterized.class)
 @SdkSuppress(minSdkVersion = Build.VERSION_CODES.LOLLIPOP)
 public class FragmentTransitionTest {
-    private final boolean mOptimize;
+    private final boolean mReorderingAllowed;
 
     @Parameterized.Parameters
     public static Object[] data() {
@@ -67,9 +68,11 @@ public class FragmentTransitionTest {
 
     private Instrumentation mInstrumentation;
     private FragmentManager mFragmentManager;
+    private int mOnBackStackChangedTimes;
+    private FragmentManager.OnBackStackChangedListener mOnBackStackChangedListener;
 
-    public FragmentTransitionTest(final boolean optimize) {
-        mOptimize = optimize;
+    public FragmentTransitionTest(final boolean reordering) {
+        mReorderingAllowed = reordering;
     }
 
     @Before
@@ -77,6 +80,20 @@ public class FragmentTransitionTest {
         mInstrumentation = InstrumentationRegistry.getInstrumentation();
         mFragmentManager = mActivityRule.getActivity().getSupportFragmentManager();
         FragmentTestUtil.setContentView(mActivityRule, R.layout.simple_container);
+        mOnBackStackChangedTimes = 0;
+        mOnBackStackChangedListener = new FragmentManager.OnBackStackChangedListener() {
+            @Override
+            public void onBackStackChanged() {
+                mOnBackStackChangedTimes++;
+            }
+        };
+        mFragmentManager.addOnBackStackChangedListener(mOnBackStackChangedListener);
+    }
+
+    @After
+    public void teardown() throws Throwable {
+        mFragmentManager.removeOnBackStackChangedListener(mOnBackStackChangedListener);
+        mOnBackStackChangedListener = null;
     }
 
     // Test that normal view transitions (enter, exit, reenter, return) run with
@@ -90,7 +107,7 @@ public class FragmentTransitionTest {
 
         // exit transition
         mFragmentManager.beginTransaction()
-                .setAllowOptimization(mOptimize)
+                .setReorderingAllowed(mReorderingAllowed)
                 .remove(fragment)
                 .addToBackStack(null)
                 .commit();
@@ -98,6 +115,7 @@ public class FragmentTransitionTest {
         fragment.waitForTransition();
         verifyAndClearTransition(fragment.exitTransition, null, green, blue);
         verifyNoOtherTransitions(fragment);
+        assertEquals(2, mOnBackStackChangedTimes);
 
         // reenter transition
         FragmentTestUtil.popBackStackImmediate(mActivityRule);
@@ -106,12 +124,14 @@ public class FragmentTransitionTest {
         final View blue2 = findBlue();
         verifyAndClearTransition(fragment.reenterTransition, null, green2, blue2);
         verifyNoOtherTransitions(fragment);
+        assertEquals(3, mOnBackStackChangedTimes);
 
         // return transition
         FragmentTestUtil.popBackStackImmediate(mActivityRule);
         fragment.waitForTransition();
         verifyAndClearTransition(fragment.returnTransition, null, green2, blue2);
         verifyNoOtherTransitions(fragment);
+        assertEquals(4, mOnBackStackChangedTimes);
     }
 
     // Test that shared elements transition from one fragment to the next
@@ -164,7 +184,7 @@ public class FragmentTransitionTest {
             @Override
             public void run() {
                 mFragmentManager.beginTransaction()
-                        .setAllowOptimization(mOptimize)
+                        .setReorderingAllowed(mReorderingAllowed)
                         .replace(R.id.fragmentContainer, fragment2)
                         .replace(R.id.fragmentContainer, fragment1)
                         .replace(R.id.fragmentContainer, fragment2)
@@ -173,6 +193,7 @@ public class FragmentTransitionTest {
             }
         });
         FragmentTestUtil.waitForExecution(mActivityRule);
+        assertEquals(2, mOnBackStackChangedTimes);
 
         // should be a normal transition from fragment1 to fragment2
         fragment2.waitForTransition();
@@ -185,6 +206,7 @@ public class FragmentTransitionTest {
 
         // Pop should also do the same thing
         FragmentTestUtil.popBackStackImmediate(mActivityRule);
+        assertEquals(3, mOnBackStackChangedTimes);
 
         fragment1.waitForTransition();
         final View popBlue = findBlue();
@@ -204,12 +226,13 @@ public class FragmentTransitionTest {
         TransitionFragment fragment2 = new TransitionFragment();
         fragment2.setLayoutId(R.layout.scene1);
         mFragmentManager.beginTransaction()
-                .setAllowOptimization(mOptimize)
+                .setReorderingAllowed(mReorderingAllowed)
                 .add(R.id.fragmentContainer1, fragment1)
                 .add(R.id.fragmentContainer2, fragment2)
                 .addToBackStack(null)
                 .commit();
         FragmentTestUtil.waitForExecution(mActivityRule);
+        assertEquals(1, mOnBackStackChangedTimes);
 
         fragment1.waitForTransition();
         final View greenSquare1 = findViewById(fragment1, R.id.greenSquare);
@@ -320,7 +343,7 @@ public class FragmentTransitionTest {
         mFragmentManager.beginTransaction()
                 .addSharedElement(startBlue, "blueSquare")
                 .replace(R.id.fragmentContainer, fragment2)
-                .setAllowOptimization(mOptimize)
+                .setReorderingAllowed(mReorderingAllowed)
                 .addToBackStack(null)
                 .commit();
         FragmentTestUtil.waitForExecution(mActivityRule);
@@ -387,7 +410,7 @@ public class FragmentTransitionTest {
         mFragmentManager.beginTransaction()
                 .addSharedElement(startBlue, "blueSquare")
                 .replace(R.id.fragmentContainer, fragment2)
-                .setAllowOptimization(mOptimize)
+                .setReorderingAllowed(mReorderingAllowed)
                 .addToBackStack(null)
                 .commit();
         FragmentTestUtil.waitForExecution(mActivityRule);
@@ -442,9 +465,10 @@ public class FragmentTransitionTest {
                 .addSharedElement(startGreen, "greenSquare")
                 .replace(R.id.fragmentContainer, fragment2)
                 .addToBackStack(null)
-                .setAllowOptimization(true)
+                .setReorderingAllowed(true)
                 .commit();
         FragmentTestUtil.waitForExecution(mActivityRule);
+        assertEquals(2, mOnBackStackChangedTimes);
 
         fragment1.waitForTransition();
         fragment2.waitForTransition();
@@ -460,6 +484,7 @@ public class FragmentTransitionTest {
 
         // Now see if it works when popped
         FragmentTestUtil.popBackStackImmediate(mActivityRule);
+        assertEquals(3, mOnBackStackChangedTimes);
 
         fragment1.waitForTransition();
         fragment2.waitForTransition();
@@ -513,7 +538,7 @@ public class FragmentTransitionTest {
         final View startGreen = findGreen();
 
         mFragmentManager.beginTransaction()
-                .setAllowOptimization(mOptimize)
+                .setReorderingAllowed(mReorderingAllowed)
                 .add(R.id.fragmentContainer, fragment2)
                 .hide(fragment1)
                 .addToBackStack(null)
@@ -564,7 +589,7 @@ public class FragmentTransitionTest {
         final View startGreen = findGreen();
 
         mFragmentManager.beginTransaction()
-                .setAllowOptimization(mOptimize)
+                .setReorderingAllowed(mReorderingAllowed)
                 .add(R.id.fragmentContainer, fragment2)
                 .detach(fragment1)
                 .addToBackStack(null)
@@ -611,7 +636,7 @@ public class FragmentTransitionTest {
         mFragmentManager.beginTransaction()
                 .addSharedElement(startBlue, "fooSquare")
                 .replace(R.id.fragmentContainer, fragment2)
-                .setAllowOptimization(mOptimize)
+                .setReorderingAllowed(mReorderingAllowed)
                 .addToBackStack(null)
                 .commit();
         FragmentTestUtil.waitForExecution(mActivityRule);
@@ -622,7 +647,7 @@ public class FragmentTransitionTest {
         final View endBlue = findBlue();
         final View endGreen = findGreen();
 
-        if (mOptimize) {
+        if (mReorderingAllowed) {
             verifyAndClearTransition(fragment1.exitTransition, null, startGreen, startBlue);
         } else {
             verifyAndClearTransition(fragment1.exitTransition, startBlueBounds, startGreen);
@@ -662,14 +687,14 @@ public class FragmentTransitionTest {
     // Test that invisible fragment views don't participate in transitions
     @Test
     public void invisibleNoTransitions() throws Throwable {
-        if (!mOptimize) {
-            return; // only optimized transitions can avoid interaction
+        if (!mReorderingAllowed) {
+            return; // only reordered transitions can avoid interaction
         }
         // enter transition
         TransitionFragment fragment = new InvisibleFragment();
         fragment.setLayoutId(R.layout.scene1);
         mFragmentManager.beginTransaction()
-                .setAllowOptimization(mOptimize)
+                .setReorderingAllowed(mReorderingAllowed)
                 .add(R.id.fragmentContainer, fragment)
                 .addToBackStack(null)
                 .commit();
@@ -679,7 +704,7 @@ public class FragmentTransitionTest {
 
         // exit transition
         mFragmentManager.beginTransaction()
-                .setAllowOptimization(mOptimize)
+                .setReorderingAllowed(mReorderingAllowed)
                 .remove(fragment)
                 .addToBackStack(null)
                 .commit();
@@ -698,15 +723,83 @@ public class FragmentTransitionTest {
         verifyNoOtherTransitions(fragment);
     }
 
+    // No crash when transitioning a shared element and there is no shared element transition.
+    @Test
+    public void noSharedElementTransition() throws Throwable {
+        TransitionFragment fragment1 = setupInitialFragment();
+
+        final View startBlue = findBlue();
+        final View startGreen = findGreen();
+        final Rect startBlueBounds = getBoundsOnScreen(startBlue);
+
+        TransitionFragment fragment2 = new TransitionFragment();
+        fragment2.setLayoutId(R.layout.scene2);
+
+        mFragmentManager.beginTransaction()
+                .setReorderingAllowed(mReorderingAllowed)
+                .addSharedElement(startBlue, "blueSquare")
+                .replace(R.id.fragmentContainer, fragment2)
+                .addToBackStack(null)
+                .commit();
+
+        fragment1.waitForTransition();
+        fragment2.waitForTransition();
+        final View midGreen = findGreen();
+        final View midBlue = findBlue();
+        final Rect midBlueBounds = getBoundsOnScreen(midBlue);
+        verifyAndClearTransition(fragment1.exitTransition, startBlueBounds, startGreen);
+        verifyAndClearTransition(fragment2.sharedElementEnter, startBlueBounds, startBlue, midBlue);
+        verifyAndClearTransition(fragment2.enterTransition, midBlueBounds, midGreen);
+        verifyNoOtherTransitions(fragment1);
+        verifyNoOtherTransitions(fragment2);
+
+        final TransitionFragment fragment3 = new TransitionFragment();
+        fragment3.setLayoutId(R.layout.scene3);
+
+        mActivityRule.runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                FragmentManager fm = mActivityRule.getActivity().getSupportFragmentManager();
+                fm.popBackStack();
+                fm.beginTransaction()
+                        .setReorderingAllowed(mReorderingAllowed)
+                        .replace(R.id.fragmentContainer, fragment3)
+                        .addToBackStack(null)
+                        .commit();
+            }
+        });
+
+        // This shouldn't give an error.
+        FragmentTestUtil.executePendingTransactions(mActivityRule);
+
+        fragment2.waitForTransition();
+        // It does not transition properly for ordered transactions, though.
+        if (mReorderingAllowed) {
+            verifyAndClearTransition(fragment2.returnTransition, null, midGreen, midBlue);
+            final View endGreen = findGreen();
+            final View endBlue = findBlue();
+            final View endRed = findRed();
+            verifyAndClearTransition(fragment3.enterTransition, null, endGreen, endBlue, endRed);
+            verifyNoOtherTransitions(fragment2);
+            verifyNoOtherTransitions(fragment3);
+        } else {
+            // fragment3 doesn't get a transition since it conflicts with the pop transition
+            verifyNoOtherTransitions(fragment3);
+            // Everything else is just doing its best. Ordered transactions can't handle
+            // multiple transitions acting together except for popping multiple together.
+        }
+    }
+
     private TransitionFragment setupInitialFragment() throws Throwable {
         TransitionFragment fragment1 = new TransitionFragment();
         fragment1.setLayoutId(R.layout.scene1);
         mFragmentManager.beginTransaction()
-                .setAllowOptimization(mOptimize)
+                .setReorderingAllowed(mReorderingAllowed)
                 .add(R.id.fragmentContainer, fragment1)
                 .addToBackStack(null)
                 .commit();
         FragmentTestUtil.waitForExecution(mActivityRule);
+        assertEquals(1, mOnBackStackChangedTimes);
         fragment1.waitForTransition();
         final View blueSquare1 = findBlue();
         final View greenSquare1 = findGreen();
@@ -787,6 +880,7 @@ public class FragmentTransitionTest {
 
     private void verifyTransition(TransitionFragment from, TransitionFragment to,
             String sharedElementName) throws Throwable {
+        final int startOnBackStackChanged = mOnBackStackChangedTimes;
         final View startBlue = findBlue();
         final View startGreen = findGreen();
         final View startRed = findRed();
@@ -794,13 +888,14 @@ public class FragmentTransitionTest {
         final Rect startBlueRect = getBoundsOnScreen(startBlue);
 
         mFragmentManager.beginTransaction()
-                .setAllowOptimization(mOptimize)
+                .setReorderingAllowed(mReorderingAllowed)
                 .addSharedElement(startBlue, sharedElementName)
                 .replace(R.id.fragmentContainer, to)
                 .addToBackStack(null)
                 .commit();
 
         FragmentTestUtil.waitForExecution(mActivityRule);
+        assertEquals(startOnBackStackChanged + 1, mOnBackStackChangedTimes);
 
         to.waitForTransition();
         final View endGreen = findGreen();
@@ -826,6 +921,8 @@ public class FragmentTransitionTest {
 
     private void verifyCrossTransition(boolean swapSource,
             TransitionFragment from1, TransitionFragment from2) throws Throwable {
+        final int startNumOnBackStackChanged = mOnBackStackChangedTimes;
+        final int changesPerOperation = mReorderingAllowed ? 1 : 2;
 
         final TransitionFragment to1 = new TransitionFragment();
         to1.setLayoutId(R.layout.scene2);
@@ -848,13 +945,13 @@ public class FragmentTransitionTest {
             @Override
             public void run() {
                 mFragmentManager.beginTransaction()
-                        .setAllowOptimization(mOptimize)
+                        .setReorderingAllowed(mReorderingAllowed)
                         .addSharedElement(fromShared1, "blueSquare")
                         .replace(R.id.fragmentContainer1, to1)
                         .addToBackStack(null)
                         .commit();
                 mFragmentManager.beginTransaction()
-                        .setAllowOptimization(mOptimize)
+                        .setReorderingAllowed(mReorderingAllowed)
                         .addSharedElement(fromShared2, sharedElementName)
                         .replace(R.id.fragmentContainer2, to2)
                         .addToBackStack(null)
@@ -862,6 +959,7 @@ public class FragmentTransitionTest {
             }
         });
         FragmentTestUtil.waitForExecution(mActivityRule);
+        assertEquals(startNumOnBackStackChanged + changesPerOperation, mOnBackStackChangedTimes);
 
         from1.waitForTransition();
         from2.waitForTransition();
@@ -897,6 +995,8 @@ public class FragmentTransitionTest {
             }
         });
         FragmentTestUtil.waitForExecution(mActivityRule);
+        assertEquals(startNumOnBackStackChanged + changesPerOperation + 1,
+                mOnBackStackChangedTimes);
 
         from1.waitForTransition();
         from2.waitForTransition();
@@ -924,6 +1024,7 @@ public class FragmentTransitionTest {
 
     private void verifyPopTransition(final int numPops, TransitionFragment from,
             TransitionFragment to, TransitionFragment... others) throws Throwable {
+        final int startOnBackStackChanged = mOnBackStackChangedTimes;
         final View startBlue = findBlue();
         final View startGreen = findGreen();
         final View startRed = findRed();
@@ -938,6 +1039,7 @@ public class FragmentTransitionTest {
             }
         });
         FragmentTestUtil.waitForExecution(mActivityRule);
+        assertEquals(startOnBackStackChanged + 1, mOnBackStackChangedTimes);
 
         to.waitForTransition();
         final View endGreen = findGreen();

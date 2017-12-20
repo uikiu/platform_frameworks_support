@@ -16,7 +16,6 @@
 
 package android.support.v4.media;
 
-import android.annotation.TargetApi;
 import android.content.Context;
 import android.content.Intent;
 import android.media.browse.MediaBrowser;
@@ -31,7 +30,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 @RequiresApi(21)
-@TargetApi(21)
 class MediaBrowserServiceCompatApi21 {
 
     public static Object createService(Context context, ServiceCompatProxy serviceProxy) {
@@ -120,7 +118,7 @@ class MediaBrowserServiceCompatApi21 {
         public MediaBrowserService.BrowserRoot onGetRoot(String clientPackageName, int clientUid,
                 Bundle rootHints) {
             MediaBrowserServiceCompatApi21.BrowserRoot browserRoot = mServiceProxy.onGetRoot(
-                    clientPackageName, clientUid, rootHints);
+                    clientPackageName, clientUid, rootHints == null ? null : new Bundle(rootHints));
             return browserRoot == null ? null : new MediaBrowserService.BrowserRoot(
                     browserRoot.mRootId, browserRoot.mExtras);
         }

@@ -1,6 +1,3 @@
-// CHECKSTYLE:OFF Generated code
-/* This file is auto-generated from VideoDetailsFragmentBackgroundController.java.  DO NOT MODIFY. */
-
 /*
  * Copyright (C) 2017 The Android Open Source Project
  *
@@ -19,7 +16,6 @@
 package android.support.v17.leanback.app;
 
 import android.animation.PropertyValuesHolder;
-import android.support.v4.app.Fragment;
 import android.graphics.Bitmap;
 import android.graphics.Color;
 import android.graphics.drawable.ColorDrawable;
@@ -33,6 +29,7 @@ import android.support.v17.leanback.media.PlaybackGlue;
 import android.support.v17.leanback.media.PlaybackGlueHost;
 import android.support.v17.leanback.widget.DetailsParallaxDrawable;
 import android.support.v17.leanback.widget.ParallaxTarget;
+import android.support.v4.app.Fragment;
 
 /**
  * Controller for DetailsSupportFragment parallax background and embedded video play.
@@ -110,14 +107,17 @@ import android.support.v17.leanback.widget.ParallaxTarget;
  */
 public class DetailsSupportFragmentBackgroundController {
 
-    private final DetailsSupportFragment mFragment;
-    private DetailsParallaxDrawable mParallaxDrawable;
-    private int mParallaxDrawableMaxOffset;
-    private PlaybackGlue mPlaybackGlue;
-    private DetailsBackgroundVideoHelper mVideoHelper;
-    private Bitmap mCoverBitmap;
-    private int mSolidColor;
-    private boolean mCanUseHost = false;
+    final DetailsSupportFragment mFragment;
+    DetailsParallaxDrawable mParallaxDrawable;
+    int mParallaxDrawableMaxOffset;
+    PlaybackGlue mPlaybackGlue;
+    DetailsBackgroundVideoHelper mVideoHelper;
+    Bitmap mCoverBitmap;
+    int mSolidColor;
+    boolean mCanUseHost = false;
+    boolean mInitialControlVisible = false;
+
+    private Fragment mLastVideoSupportFragmentForGlueHost;
 
     /**
      * Creates a DetailsSupportFragmentBackgroundController for a DetailsSupportFragment. Note that
@@ -207,27 +207,102 @@ public class DetailsSupportFragmentBackgroundController {
                 bottomDrawable,
                 coverDrawableParallaxTarget);
         mFragment.setBackgroundDrawable(mParallaxDrawable);
+        // create a VideoHelper with null PlaybackGlue for changing CoverDrawable visibility
+        // before PlaybackGlue is ready.
+        mVideoHelper = new DetailsBackgroundVideoHelper(null,
+                mFragment.getParallax(), mParallaxDrawable.getCoverDrawable());
     }
 
     /**
      * Enable video playback and set proper {@link PlaybackGlueHost}. This method by default
      * creates a VideoSupportFragment and VideoSupportFragmentGlueHost to host the PlaybackGlue.
-     * This method must be called after calling details Fragment super.onCreate().
+     * This method must be called after calling details Fragment super.onCreate(). This method
+     * can be called multiple times to replace existing PlaybackGlue or calling
+     * setupVideoPlayback(null) to clear. Note a typical {@link PlaybackGlue} subclass releases
+     * resources in {@link PlaybackGlue#onDetachedFromHost()}, when the {@link PlaybackGlue}
+     * subclass is not doing that, it's app's responsibility to release the resources.
      *
-     * @param playbackGlue
+     * @param playbackGlue The new PlaybackGlue to set as background or null to clear existing one.
      * @see #onCreateVideoSupportFragment()
      * @see #onCreateGlueHost().
      */
+    @SuppressWarnings("ReferenceEquality")
     public void setupVideoPlayback(@NonNull PlaybackGlue playbackGlue) {
         if (mPlaybackGlue == playbackGlue) {
             return;
         }
-        mPlaybackGlue = playbackGlue;
-        mVideoHelper = new DetailsBackgroundVideoHelper(mPlaybackGlue,
-                mFragment.getParallax(), mParallaxDrawable.getCoverDrawable());
-        if (mCanUseHost) {
-            mPlaybackGlue.setHost(onCreateGlueHost());
+
+        PlaybackGlueHost playbackGlueHost = null;
+        if (mPlaybackGlue != null) {
+            playbackGlueHost = mPlaybackGlue.getHost();
+            mPlaybackGlue.setHost(null);
         }
+
+        mPlaybackGlue = playbackGlue;
+        mVideoHelper.setPlaybackGlue(mPlaybackGlue);
+        if (mCanUseHost && mPlaybackGlue != null) {
+            if (playbackGlueHost == null
+                    || mLastVideoSupportFragmentForGlueHost != findOrCreateVideoSupportFragment()) {
+                mPlaybackGlue.setHost(createGlueHost());
+                mLastVideoSupportFragmentForGlueHost = findOrCreateVideoSupportFragment();
+            } else {
+                mPlaybackGlue.setHost(playbackGlueHost);
+            }
+        }
+    }
+
+    /**
+     * Returns current PlaybackGlue or null if not set or cleared.
+     *
+     * @return Current PlaybackGlue or null
+     */
+    public final PlaybackGlue getPlaybackGlue() {
+        return mPlaybackGlue;
+    }
+
+    /**
+     * Precondition allows user navigate to video fragment using DPAD. Default implementation
+     * returns true if PlaybackGlue is not null. Subclass may override, e.g. only allow navigation
+     * when {@link PlaybackGlue#isPrepared()} is true. Note this method does not block
+     * app calls {@link #switchToVideo}.
+     *
+     * @return True allow to navigate to video fragment.
+     */
+    public boolean canNavigateToVideoSupportFragment() {
+        return mPlaybackGlue != null;
+    }
+
+    void switchToVideoBeforeCreate() {
+        mVideoHelper.crossFadeBackgroundToVideo(true, true);
+        mInitialControlVisible = true;
+    }
+
+    /**
+     * Switch to video fragment, note that this method is not affected by result of
+     * {@link #canNavigateToVideoSupportFragment()}. If the method is called in DetailsSupportFragment.onCreate()
+     * it will make video fragment to be initially focused once it is created.
+     * <p>
+     * Calling switchToVideo() in DetailsSupportFragment.onCreate() will clear the activity enter
+     * transition and shared element transition.
+     * </p>
+     * <p>
+     * If switchToVideo() is called after {@link DetailsSupportFragment#prepareEntranceTransition()} and
+     * before {@link DetailsSupportFragment#onEntranceTransitionEnd()}, it will be ignored.
+     * </p>
+     * <p>
+     * If {@link DetailsSupportFragment#prepareEntranceTransition()} is called after switchToVideo(), an
+     * IllegalStateException will be thrown.
+     * </p>
+     */
+    public final void switchToVideo() {
+        mFragment.switchToVideo();
+    }
+
+    /**
+     * Switch to rows fragment.
+     */
+    public final void switchToRows() {
+        mFragment.switchToRows();
     }
 
     /**
@@ -238,10 +313,11 @@ public class DetailsSupportFragmentBackgroundController {
         if (!mCanUseHost) {
             mCanUseHost = true;
             if (mPlaybackGlue != null) {
-                mPlaybackGlue.setHost(onCreateGlueHost());
+                mPlaybackGlue.setHost(createGlueHost());
+                mLastVideoSupportFragmentForGlueHost = findOrCreateVideoSupportFragment();
             }
         }
-        if (mPlaybackGlue != null && mPlaybackGlue.isReadyForPlayback()) {
+        if (mPlaybackGlue != null && mPlaybackGlue.isPrepared()) {
             mPlaybackGlue.play();
         }
     }
@@ -316,6 +392,16 @@ public class DetailsSupportFragmentBackgroundController {
      */
     public PlaybackGlueHost onCreateGlueHost() {
         return new VideoSupportFragmentGlueHost((VideoSupportFragment) findOrCreateVideoSupportFragment());
+    }
+
+    PlaybackGlueHost createGlueHost() {
+        PlaybackGlueHost host = onCreateGlueHost();
+        if (mInitialControlVisible) {
+            host.showControlsOverlay(false);
+        } else {
+            host.hideControlsOverlay(false);
+        }
+        return host;
     }
 
     /**

@@ -23,6 +23,7 @@ import android.support.v17.leanback.media.PlaybackControlGlue;
 import android.support.v17.leanback.test.R;
 import android.support.v17.leanback.widget.Action;
 import android.support.v17.leanback.widget.ArrayObjectAdapter;
+import android.support.v17.leanback.widget.ClassPresenterSelector;
 import android.support.v17.leanback.widget.HeaderItem;
 import android.support.v17.leanback.widget.ListRow;
 import android.support.v17.leanback.widget.ListRowPresenter;
@@ -46,8 +47,6 @@ public class PlaybackTestFragment extends PlaybackFragment {
      */
     private static final int BACKGROUND_TYPE = PlaybackFragment.BG_LIGHT;
 
-    private static final int ROW_CONTROLS = 0;
-
     /**
      * Change this to select hidden
      */
@@ -59,8 +58,9 @@ public class PlaybackTestFragment extends PlaybackFragment {
     private static final int RELATED_CONTENT_ROWS = 3;
 
     private android.support.v17.leanback.media.PlaybackControlGlue mGlue;
-    private ListRowPresenter mListRowPresenter;
+    boolean mDestroyCalled;
 
+    @Override
     public SparseArrayObjectAdapter getAdapter() {
         return (SparseArrayObjectAdapter) super.getAdapter();
     }
@@ -72,6 +72,12 @@ public class PlaybackTestFragment extends PlaybackFragment {
             Log.d(TAG, "onItemClicked: " + item + " row " + row);
         }
     };
+
+    @Override
+    public void onDestroy() {
+        super.onDestroy();
+        mDestroyCalled = true;
+    }
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -88,11 +94,11 @@ public class PlaybackTestFragment extends PlaybackFragment {
         mGlue = new PlaybackControlHelper(context) {
             @Override
             public int getUpdatePeriod() {
-                int totalTime = getControlsRow().getTotalTime();
+                long totalTime = getControlsRow().getDuration();
                 if (getView() == null || getView().getWidth() == 0 || totalTime <= 0) {
                     return 1000;
                 }
-                return Math.max(16, totalTime / getView().getWidth());
+                return 16;
             }
 
             @Override
@@ -112,23 +118,10 @@ public class PlaybackTestFragment extends PlaybackFragment {
         };
 
         mGlue.setHost(new PlaybackFragmentGlueHost(this));
-       //  mGlue.setOnI
-        mListRowPresenter = new ListRowPresenter();
+        ClassPresenterSelector selector = new ClassPresenterSelector();
+        selector.addClassPresenter(ListRow.class, new ListRowPresenter());
 
-        setAdapter(new SparseArrayObjectAdapter(new PresenterSelector() {
-            @Override
-            public Presenter getPresenter(Object object) {
-                if (object instanceof PlaybackControlsRow) {
-                    return mGlue.getControlsRowPresenter();
-                } else if (object instanceof ListRow) {
-                    return mListRowPresenter;
-                }
-                throw new IllegalArgumentException("Unhandled object: " + object);
-            }
-        }));
-
-        // Add the controls row
-        getAdapter().set(ROW_CONTROLS, mGlue.getControlsRow());
+        setAdapter(new SparseArrayObjectAdapter(selector));
 
         // Add related content rows
         for (int i = 0; i < RELATED_CONTENT_ROWS; ++i) {
@@ -136,7 +129,7 @@ public class PlaybackTestFragment extends PlaybackFragment {
             listRowAdapter.add("Some related content");
             listRowAdapter.add("Other related content");
             HeaderItem header = new HeaderItem(i, "Row " + i);
-            getAdapter().set(ROW_CONTROLS + 1 + i, new ListRow(header, listRowAdapter));
+            getAdapter().set(1 + i, new ListRow(header, listRowAdapter));
         }
     }
 
@@ -179,9 +172,9 @@ public class PlaybackTestFragment extends PlaybackFragment {
         PlaybackControlHelper(Context context) {
             super(context, sFastForwardSpeeds);
             mThumbsUpAction = new PlaybackControlsRow.ThumbsUpAction(context);
-            mThumbsUpAction.setIndex(PlaybackControlsRow.ThumbsUpAction.OUTLINE);
+            mThumbsUpAction.setIndex(PlaybackControlsRow.ThumbsUpAction.INDEX_OUTLINE);
             mThumbsDownAction = new PlaybackControlsRow.ThumbsDownAction(context);
-            mThumbsDownAction.setIndex(PlaybackControlsRow.ThumbsDownAction.OUTLINE);
+            mThumbsDownAction.setIndex(PlaybackControlsRow.ThumbsDownAction.INDEX_OUTLINE);
             mRepeatAction = new PlaybackControlsRow.RepeatAction(context);
             mPipAction = new PlaybackControlsRow.PictureInPictureAction(context);
         }
@@ -322,7 +315,7 @@ public class PlaybackTestFragment extends PlaybackFragment {
             sProgressHandler.post(new Runnable() {
                 @Override
                 public void run() {
-                    if (mRepeatAction.getIndex() == PlaybackControlsRow.RepeatAction.NONE) {
+                    if (mRepeatAction.getIndex() == PlaybackControlsRow.RepeatAction.INDEX_NONE) {
                         pause();
                     } else {
                         play(PlaybackControlGlue.PLAYBACK_SPEED_NORMAL);

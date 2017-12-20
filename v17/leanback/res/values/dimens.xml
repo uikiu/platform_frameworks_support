@@ -124,9 +124,11 @@
     <dimen name="lb_action_text_size">16sp</dimen>
     <dimen name="lb_action_button_corner_radius">2dp</dimen>
 
-    <dimen name="lb_playback_controls_align_bottom">58dp</dimen>
-    <dimen name="lb_playback_controls_padding_top">216dp</dimen>
+    <!-- distance of bottom of playback row to bottom edge, used for overscan protection and
+    peeking related rows-->
     <dimen name="lb_playback_controls_padding_bottom">28dp</dimen>
+    <!-- distance of other rows' center to bottom edge, half of screen by default -->
+    <dimen name="lb_playback_other_rows_center_to_bottom">270dp</dimen>
     <dimen name="lb_playback_major_fade_translate_y">200dp</dimen>
     <dimen name="lb_playback_minor_fade_translate_y">16dp</dimen>
     <dimen name="lb_playback_controls_card_height">176dp</dimen>
@@ -157,6 +159,33 @@
     <dimen name="lb_playback_now_playing_bar_margin">1dp</dimen>
     <dimen name="lb_playback_now_playing_view_size">28dp</dimen>
     <dimen name="lb_playback_play_icon_size">14dp</dimen>
+
+    <!-- margin to move controlBar button a bit left to align icon with description left -->
+    <dimen name="lb_playback_transport_controlbar_margin_start">-12dp</dimen>
+    <dimen name="lb_playback_transport_control_info_margin_bottom">20dp</dimen>
+    <dimen name="lb_playback_transport_control_row_padding_bottom">20dp</dimen>
+    <dimen name="lb_playback_transport_image_height">176dp</dimen>
+    <dimen name="lb_playback_transport_image_margin_end">24dp</dimen>
+
+    <!-- height should including enough space for thumbs when activated -->
+    <dimen name="lb_playback_transport_progressbar_height">28dp</dimen>
+    <!-- height for the bar when not focused -->
+    <dimen name="lb_playback_transport_progressbar_bar_height">4dp</dimen>
+    <!-- height for the bar when focused -->
+    <dimen name="lb_playback_transport_progressbar_active_bar_height">6dp</dimen>
+    <!-- radius of thumb when focused -->
+    <dimen name="lb_playback_transport_progressbar_active_radius">6dp</dimen>
+
+    <!-- Thumbs bar -->
+    <dimen name="lb_playback_transport_thumbs_width">154dp</dimen>
+    <dimen name="lb_playback_transport_thumbs_height">154dp</dimen>
+    <dimen name="lb_playback_transport_hero_thumbs_width">192dp</dimen>
+    <dimen name="lb_playback_transport_hero_thumbs_height">192dp</dimen>
+    <dimen name="lb_playback_transport_thumbs_margin">4dp</dimen>
+    <dimen name="lb_playback_transport_thumbs_bottom_margin">18dp</dimen>
+
+    <dimen name="lb_playback_transport_time_margin">8dp</dimen>
+    <dimen name="lb_playback_transport_time_margin_top">8dp</dimen>
 
     <dimen name="lb_control_button_diameter">90dp</dimen>
     <dimen name="lb_control_button_height">64dp</dimen>
@@ -229,8 +258,8 @@
     <dimen name="lb_basic_card_info_badge_margin">4dp</dimen>
 
     <!-- z based shadow -->
-    <dimen name="lb_material_shadow_normal_z">6dp</dimen>
-    <dimen name="lb_material_shadow_focused_z">16dp</dimen>
+    <dimen name="lb_material_shadow_normal_z">0dp</dimen>
+    <dimen name="lb_material_shadow_focused_z">10dp</dimen>
     <dimen name="lb_material_shadow_details_z">8dp</dimen>
     <dimen name="lb_search_orb_unfocused_z">2dp</dimen>
     <dimen name="lb_search_orb_focused_z">8dp</dimen>

@@ -31,10 +31,13 @@ class MediaBrowserProtocol {
     public static final String DATA_ROOT_HINTS = "data_root_hints";
     public static final String DATA_SEARCH_EXTRAS = "data_search_extras";
     public static final String DATA_SEARCH_QUERY = "data_search_query";
+    public static final String DATA_CUSTOM_ACTION = "data_custom_action";
+    public static final String DATA_CUSTOM_ACTION_EXTRAS = "data_custom_action_extras";
 
     public static final String EXTRA_CLIENT_VERSION = "extra_client_version";
     public static final String EXTRA_SERVICE_VERSION = "extra_service_version";
     public static final String EXTRA_MESSENGER_BINDER = "extra_messenger";
+    public static final String EXTRA_SESSION_BINDER = "extra_session_binder";
 
     /**
      * MediaBrowserCompat will check the version of the connected MediaBrowserServiceCompat,
@@ -42,7 +45,15 @@ class MediaBrowserProtocol {
      * MediaBrowserServiceCompat.
      */
     public static final int SERVICE_VERSION_1 = 1;
-    public static final int SERVICE_VERSION_CURRENT = SERVICE_VERSION_1;
+
+    /**
+     * To prevent ClassNotFoundException from Parcelables, MediaBrowser(Service)Compat tries to
+     * avoid using framework code as much as possible (b/62648808). For backward compatibility,
+     * service v2 is introduced so that the browser can distinguish whether the service supports
+     * subscribing through compat code.
+     */
+    public static final int SERVICE_VERSION_2 = 2;
+    public static final int SERVICE_VERSION_CURRENT = SERVICE_VERSION_2;
 
     /*
      * Messages sent from the media browser service compat to the media browser compat.
@@ -166,8 +177,20 @@ class MediaBrowserProtocol {
      *     DATA_SEARCH_QUERY : A string for search query that contains keywords separated by space.
      *     DATA_SEARCH_EXTRAS : A bundle of service-specific arguments to send to the media browser
      *                          service.
-     *     DATA_RESULT_RECEIVER : Result receiver to get the result
+     *     DATA_RESULT_RECEIVER : Result receiver to get the result.
      * - replyTo : Callback messenger
      */
     public static final int CLIENT_MSG_SEARCH = 8;
+
+    /** (client v1)
+     * Sent to request a custom action from the media browser.
+     * - arg1 : The client version
+     * - data
+     *     DATA_CUSTOM_ACTION : A string for the custom action.
+     *     DATA_CUSTOM_ACTION_EXTRAS : A bundle of service-specific arguments to send to the media
+     *                                 browser service.
+     *     DATA_RESULT_RECEIVER : Result receiver to get the result.
+     * - replyTo : Callback messenger
+     */
+    public static final int CLIENT_MSG_SEND_CUSTOM_ACTION = 9;
 }

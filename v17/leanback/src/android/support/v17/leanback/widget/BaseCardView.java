@@ -681,6 +681,8 @@ public class BaseCardView extends FrameLayout {
         if (mAnim != null) {
             mAnim.cancel();
             mAnim = null;
+            // force-clear the animation, as Animation#cancel() doesn't work prior to N,
+            // and will instead cause the animation to infinitely loop
             clearAnimation();
         }
     }
@@ -889,7 +891,7 @@ public class BaseCardView extends FrameLayout {
          * @param source The layout params to copy from.
          */
         public LayoutParams(LayoutParams source) {
-            super(source);
+            super((ViewGroup.MarginLayoutParams) source);
 
             this.viewType = source.viewType;
         }

@@ -25,7 +25,7 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.os.SystemClock;
 import android.support.test.InstrumentationRegistry;
-import android.support.test.filters.MediumTest;
+import android.support.test.filters.LargeTest;
 import android.support.test.runner.AndroidJUnit4;
 import android.support.v17.leanback.media.MediaPlayerGlue;
 import android.support.v17.leanback.media.PlaybackGlue;
@@ -42,7 +42,7 @@ import junit.framework.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
-@MediumTest
+@LargeTest
 @RunWith(AndroidJUnit4.class)
 public class VideoFragmentTest extends SingleFragmentTestBase {
 
@@ -75,16 +75,17 @@ public class VideoFragmentTest extends SingleFragmentTestBase {
 
     @Test
     public void setSurfaceViewCallbackBeforeCreate() {
-        launchAndWaitActivity(Fragment_setSurfaceViewCallbackBeforeCreate.class, 1000);
+        final SingleFragmentTestActivity activity =
+                launchAndWaitActivity(Fragment_setSurfaceViewCallbackBeforeCreate.class, 1000);
         Fragment_setSurfaceViewCallbackBeforeCreate fragment1 =
-                (Fragment_setSurfaceViewCallbackBeforeCreate) mActivity.getTestFragment();
+                (Fragment_setSurfaceViewCallbackBeforeCreate) activity.getTestFragment();
         assertNotNull(fragment1);
         assertTrue(fragment1.mSurfaceCreated);
 
         InstrumentationRegistry.getInstrumentation().runOnMainSync(new Runnable() {
             @Override
             public void run() {
-                mActivity.getFragmentManager().beginTransaction()
+                activity.getFragmentManager().beginTransaction()
                         .replace(R.id.main_frame, new Fragment_setSurfaceViewCallbackBeforeCreate())
                         .commitAllowingStateLoss();
             }
@@ -94,7 +95,7 @@ public class VideoFragmentTest extends SingleFragmentTestBase {
         assertFalse(fragment1.mSurfaceCreated);
 
         Fragment_setSurfaceViewCallbackBeforeCreate fragment2 =
-                (Fragment_setSurfaceViewCallbackBeforeCreate) mActivity.getTestFragment();
+                (Fragment_setSurfaceViewCallbackBeforeCreate) activity.getTestFragment();
         assertNotNull(fragment2);
         assertTrue(fragment2.mSurfaceCreated);
         assertNotSame(fragment1, fragment2);
@@ -102,8 +103,8 @@ public class VideoFragmentTest extends SingleFragmentTestBase {
 
     @Test
     public void setSurfaceViewCallbackAfterCreate() {
-        launchAndWaitActivity(VideoFragment.class, 1000);
-        VideoFragment fragment = (VideoFragment) mActivity.getTestFragment();
+        SingleFragmentTestActivity activity = launchAndWaitActivity(VideoFragment.class, 1000);
+        VideoFragment fragment = (VideoFragment) activity.getTestFragment();
 
         assertNotNull(fragment);
 
@@ -162,11 +163,13 @@ public class VideoFragmentTest extends SingleFragmentTestBase {
             mGlue.setTitle("Leanback team at work");
             mGlue.setMediaSource(
                     Uri.parse("android.resource://android.support.v17.leanback.test/raw/video"));
-            mGlue.setPlayerCallback(new PlaybackGlue.PlayerCallback() {
+            mGlue.addPlayerCallback(new PlaybackGlue.PlayerCallback() {
                 @Override
-                public void onReadyForPlayback() {
-                    mGlueOnReadyForPlaybackCalled++;
-                    mGlue.play();
+                public void onPreparedStateChanged(PlaybackGlue glue) {
+                    if (glue.isPrepared()) {
+                        mGlueOnReadyForPlaybackCalled++;
+                        mGlue.play();
+                    }
                 }
             });
             mGlue.setHost(new VideoFragmentGlueHost(this));
@@ -194,9 +197,10 @@ public class VideoFragmentTest extends SingleFragmentTestBase {
 
     @Test
     public void mediaPlayerGlueInVideoFragment() {
-        launchAndWaitActivity(Fragment_withVideoPlayer.class, 1000);
+        final SingleFragmentTestActivity activity =
+                launchAndWaitActivity(Fragment_withVideoPlayer.class, 1000);
         final Fragment_withVideoPlayer fragment = (Fragment_withVideoPlayer)
-                mActivity.getTestFragment();
+                activity.getTestFragment();
 
         PollingCheck.waitFor(5000, new PollingCheck.PollingCheckCondition() {
             @Override
@@ -214,7 +218,7 @@ public class VideoFragmentTest extends SingleFragmentTestBase {
         InstrumentationRegistry.getInstrumentation().runOnMainSync(new Runnable() {
             @Override
             public void run() {
-                mActivity.recreate();
+                activity.recreate();
             }
         });
 
@@ -235,7 +239,7 @@ public class VideoFragmentTest extends SingleFragmentTestBase {
         assertEquals(0, fragment.mGlueDetachedFromHost);
         assertEquals(1, fragment.mGlueOnReadyForPlaybackCalled);
 
-        mActivity.finish();
+        activity.finish();
         PollingCheck.waitFor(5000, new PollingCheck.PollingCheckCondition() {
             @Override
             public boolean canProceed() {

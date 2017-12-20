@@ -33,6 +33,7 @@ public class StubMediaBrowserServiceCompat extends MediaBrowserServiceCompat {
     static final String EXTRAS_KEY = "test_extras_key";
     static final String EXTRAS_VALUE = "test_extras_value";
 
+    static final String MEDIA_ID = "test_media_id";
     static final String MEDIA_ID_INVALID = "test_media_id_invalid";
     static final String MEDIA_ID_ROOT = "test_media_id_root";
     static final String MEDIA_ID_CHILDREN_DELAYED = "test_media_id_children_delayed";
@@ -45,9 +46,12 @@ public class StubMediaBrowserServiceCompat extends MediaBrowserServiceCompat {
             MEDIA_ID_CHILDREN_DELAYED
     };
 
-    static final String SEARCH_QUERY = "test_media_children";
+    static final String SEARCH_QUERY = "children_2";
     static final String SEARCH_QUERY_FOR_NO_RESULT = "query no result";
     static final String SEARCH_QUERY_FOR_ERROR = "query for error";
+
+    static final String CUSTOM_ACTION = "CUSTOM_ACTION";
+    static final String CUSTOM_ACTION_FOR_ERROR = "CUSTOM_ACTION_FOR_ERROR";
 
     static StubMediaBrowserServiceCompat sInstance;
 
@@ -56,6 +60,9 @@ public class StubMediaBrowserServiceCompat extends MediaBrowserServiceCompat {
     private Result<List<MediaItem>> mPendingLoadChildrenResult;
     private Result<MediaItem> mPendingLoadItemResult;
     private Bundle mPendingRootHints;
+
+    /* package private */ Bundle mCustomActionExtras;
+    /* package private */ Result<Bundle> mCustomActionResult;
 
     @Override
     public void onCreate() {
@@ -130,6 +137,18 @@ public class StubMediaBrowserServiceCompat extends MediaBrowserServiceCompat {
                 }
             }
             result.sendResult(items);
+        }
+    }
+
+    @Override
+    public void onCustomAction(String action, Bundle extras,
+            Result<Bundle> result) {
+        mCustomActionResult = result;
+        mCustomActionExtras = extras;
+        if (CUSTOM_ACTION_FOR_ERROR.equals(action)) {
+            result.sendError(null);
+        } else if (CUSTOM_ACTION.equals(action)) {
+            result.detach();
         }
     }
 

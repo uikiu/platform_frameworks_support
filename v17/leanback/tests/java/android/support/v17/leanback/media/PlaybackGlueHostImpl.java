@@ -15,12 +15,18 @@
  */
 package android.support.v17.leanback.media;
 
+import android.support.v17.leanback.widget.PlaybackRowPresenter;
+import android.support.v17.leanback.widget.Row;
+
 /**
  * Fake PlaybackGlueHost used by test.
  */
 public class PlaybackGlueHostImpl extends PlaybackGlueHost {
 
-    HostCallback mHostCallback;
+    protected HostCallback mHostCallback;
+    protected Row mRow;
+    protected PlaybackRowPresenter mPlaybackRowPresenter;
+    protected PlayerCallback mPlayerCallback;
 
     @Override
     public void setHostCallback(HostCallback callback) {
@@ -55,5 +61,24 @@ public class PlaybackGlueHostImpl extends PlaybackGlueHost {
         if (mHostCallback != null) {
             mHostCallback.onHostDestroy();
         }
+    }
+
+    @Override
+    public void setPlaybackRow(Row row) {
+        mRow = row;
+    }
+
+    @Override
+    public void setPlaybackRowPresenter(PlaybackRowPresenter presenter) {
+        mPlaybackRowPresenter = presenter;
+    }
+
+    @Override
+    public PlayerCallback getPlayerCallback() {
+        return mPlayerCallback;
+    }
+
+    public void setPlayerCallback(PlayerCallback playerCallback) {
+        mPlayerCallback = playerCallback;
     }
 }
