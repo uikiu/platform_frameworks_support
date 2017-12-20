@@ -16,3 +16,5 @@ local.properties
 buildSrc/build
 
 *.udb
+*.sisc
+platform_frameworks_support.si4project/
