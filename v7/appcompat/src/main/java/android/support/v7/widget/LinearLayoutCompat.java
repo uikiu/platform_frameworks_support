@@ -289,6 +289,11 @@ public class LinearLayoutCompat extends ViewGroup {
         }
     }
 
+    /**
+     * 名词解释：divider 是分离、分割的意思；vertical 是垂直、纵向的
+     *
+     * @param canvas
+     */
     void drawDividersVertical(Canvas canvas) {
         final int count = getVirtualChildCount();
         for (int i = 0; i < count; i++) {

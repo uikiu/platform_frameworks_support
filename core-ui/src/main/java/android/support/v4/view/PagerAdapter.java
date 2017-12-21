@@ -76,6 +76,12 @@ import android.view.ViewGroup;
  * set change may involve pages being added, removed, or changing position. The
  * ViewPager will keep the current page active provided the adapter implements
  * the method {@link #getItemPosition(Object)}.</p>
+ * -------------------------------------------------------------------------------------------------
+ * 名词翻译：populate 填充，specific 具体的、特定的、明确的、inside of 里面的
+ * 与ViewPager结合使用，填充在ViewPager内部。
+ * PagerAdapter是一个抽象类，你需要实现它。大部分情况下，您可能使用的是它的子类
+ * {@link android.support.v4.app.FragmentPagerAdapter} or
+ * {@link android.support.v4.app.FragmentStatePagerAdapter}.
  */
 public abstract class PagerAdapter {
     private final DataSetObservable mObservable = new DataSetObservable();
