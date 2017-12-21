@@ -1,6 +1,6 @@
 .classpath
 .gradle
-**/.idea/**
+/.idea/
 !**/.idea/codeStyleSettings.xml
 !**/.idea/copyright
 !.idea/copyright/AndroidCopyright.xml
@@ -8,6 +8,7 @@
 !.idea/vcs.xml
 .project
 .settings/
+
 project.properties
 local.properties
 **/bin
@@ -15,12 +16,12 @@ local.properties
 *.iml
 **/out
 buildSrc/build
-<<<<<<< HEAD
+
 
 *.udb
 *.sisc
 platform_frameworks_support.si4project/
-=======
+
 lifecycle/common/build
 jacoco.exec
->>>>>>> upstream/master
+

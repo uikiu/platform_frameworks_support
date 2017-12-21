@@ -151,6 +151,10 @@ import java.util.List;
  * writing an {@link Adapter}, you probably want to use adapter positions.
  *
  * @attr ref android.support.v7.recyclerview.R.styleable#RecyclerView_layoutManager
+ * -------------------------------------------------------------------------------------------------
+ * RecyclerView的横线用到的算法在LinearLayoutCompant中的drawDividersVertical(Canvas)方法中。
+ *
+ *
  */
 public class RecyclerView extends ViewGroup implements ScrollingView, NestedScrollingChild2 {
 
