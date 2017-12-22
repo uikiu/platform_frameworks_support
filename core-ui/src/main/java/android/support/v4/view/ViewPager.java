@@ -98,6 +98,12 @@ import java.util.List;
  *
  * <p>You can find examples of using ViewPager in the API 4+ Support Demos and API 13+ Support Demos
  * sample code.
+ * -------------------------------------------------------------------------------------------------
+ * 名词解释：convenient 方便、便利
+ * ViewPager最为普遍的使用方式是与Fragment结合使用。
+ *
+ *
+ *
  */
 public class ViewPager extends ViewGroup {
     private static final String TAG = "ViewPager";

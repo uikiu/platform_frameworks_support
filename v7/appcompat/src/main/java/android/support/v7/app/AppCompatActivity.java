@@ -512,6 +512,7 @@ public class AppCompatActivity extends FragmentActivity implements AppCompatCall
 
     /**
      * @return The {@link AppCompatDelegate} being used by this Activity.
+     * 名词解释：delegate 代理、代表。
      */
     @NonNull
     public AppCompatDelegate getDelegate() {
