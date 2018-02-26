@@ -1,3 +1,4 @@
+/unbundled-build
 .classpath
 .gradle
 /.idea/
@@ -24,4 +25,7 @@ platform_frameworks_support.si4project/
 
 lifecycle/common/build
 jacoco.exec
+<<<<<<< HEAD
 
+=======
+>>>>>>> upstream/master
