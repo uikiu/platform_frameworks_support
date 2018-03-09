@@ -152,6 +152,7 @@ import java.util.List;
  *
  * @attr ref android.support.v7.recyclerview.R.styleable#RecyclerView_layoutManager
  * -------------------------------------------------------------------------------------------------
+ * <p>
  * 1. RecyclerView 的横线用到的算法在LinearLayoutCompant中的drawDividersVertical(Canvas)方法中。每一条横线都有上下左右四个坐标，然后又一个横线的厚度。
  * 2. RecyerView 添加头部和尾部,两种方案：
  * 2.1> 在adapter中添加，类似于listView：addHeaderView(View v),这样adapter就会出现两部分，第一部分是用户设置，另一个部分是设置的头部分和尾部。
@@ -972,6 +973,10 @@ public class RecyclerView extends ViewGroup implements ScrollingView, NestedScro
      * RecyclerView to avoid invalidating the whole layout when its adapter contents change.
      *
      * @param hasFixedSize true if adapter changes cannot affect the size of the RecyclerView.
+     *                     ---------------------------------------------------------------------------------------------
+     *                     当我们确定Item的改变不会影响RecyclerView的宽高的时候可以设置setHasFixedSize(true)，
+     *                     并通过Adapter的增删改插方法去刷新RecyclerView，而不是通过notifyDataSetChanged()。
+     *                     （其实可以直接设置为true，当需要改变宽高的时候就用notifyDataSetChanged()去整体刷新一下）
      */
     public void setHasFixedSize(boolean hasFixedSize) {
         mHasFixedSize = hasFixedSize;
@@ -6471,6 +6476,7 @@ public class RecyclerView extends ViewGroup implements ScrollingView, NestedScro
          * @return A new ViewHolder that holds a View of the given view type.
          * @see #getItemViewType(int)
          * @see #onBindViewHolder(ViewHolder, int)
+         * -----------------------------------------------------------------------------------------
          */
         public abstract VH onCreateViewHolder(ViewGroup parent, int viewType);
 
@@ -7020,6 +7026,26 @@ public class RecyclerView extends ViewGroup implements ScrollingView, NestedScro
      * be then obtained from {@link #getProperties(Context, AttributeSet, int, int)}. In case
      * a LayoutManager specifies both constructors, the non-default constructor will take
      * precedence.
+     * ---------------------------------------------------------------------------------------------
+     * 顾名思义：布局管理器。
+     * 主要服务于recylerView的setLayoutManager(LayoutManager layout)方法。
+     * 本类为抽象类，可以自己实现以便定制化。android官方同时也为我们提供了几个实现类，我们可以直接使用。
+     * 两个直接子类：LinearLayoutManager,StaggeredGridLayoutManager
+     * 两个间接子类：GridLayoutManager,WearableLinearLayoutManager
+     * <p>
+     * 如果要自定义布局管理器，则需要了解一些RecyclerView的ViewHolder两种缓存方式：
+     * recycle人View中有两种缓存：scrap和recyle。scrap废料，recyle回收。
+     * scrap缓存的view可直接使用。无需重新绑定里面的data。
+     * recycle缓存的view不能够直接使用必须重新绑定
+     * {@link RecyclerViewApdater#onBindViewHolder(VH holder, int position)}，或者重新创建
+     * {@link RecyclerViewApdater#onCreateViewHolder(ViewGroup parent, int viewType)}
+     * 至于哪一种情况使用哪一种缓存，我们这里有一个原则：
+     * 1. Detach的view放在scrap缓存。detach意即：分离。
+     * 使用场景：在不离开屏幕的前期下将item移除然后又添加。例如：拖拽功能。
+     * 使用方式：{@ink LayoutManager#detachAndScrapView()}、{@ink LayoutManager#detachAndScrapViewAt()}、{@ink LayoutManager#detachAndScrapAttachedViews()}
+     * 2. remove掉的view放在recycle缓存。remove意即：删除。
+     * 使用场景：item已经滚动出屏幕。
+     * 使用方式：{@ink LayoutManager#removeAndRecycleView()}、{@ink LayoutManager#removeAndRecycleViewAt()}、{@ink LayoutManager#removeAndRecycleAllViews()}
      */
     public abstract static class LayoutManager {
         ChildHelper mChildHelper;
@@ -10331,7 +10357,7 @@ public class RecyclerView extends ViewGroup implements ScrollingView, NestedScro
      * 将所有的item设计为一个对象，而这个ViewHolder就是这个对象的父类。它主要用于绑定item上的view和data。
      */
     public abstract static class ViewHolder {
-        public final View itemView;
+        public final View itemView;//item的rootView
         WeakReference<RecyclerView> mNestedRecyclerView;
         int mPosition = NO_POSITION;
         int mOldPosition = NO_POSITION;

@@ -31,6 +31,10 @@ import java.util.Arrays;
  * <p>
  * By default, each item occupies 1 span. You can change it by providing a custom
  * {@link SpanSizeLookup} instance via {@link #setSpanSizeLookup(SpanSizeLookup)}.
+ * --------------------------------------------------------------------------------------------
+ * 网格装的layout
+ *
+ *
  */
 public class GridLayoutManager extends LinearLayoutManager {
 
